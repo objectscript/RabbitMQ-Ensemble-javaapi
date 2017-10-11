@@ -4,7 +4,7 @@ import com.rabbitmq.client.*;
 
 import java.io.IOException;
 
-
+import java.nio.file.*;
 /**
  * Created by eduard on 06.10.2017.
  */
@@ -30,24 +30,21 @@ public class API {
         _queue = queue;
     }
 
-    public String[] readMessageStream(byte[] msg) throws Exception {
-        String[] result = new String[15];
-
-        GetResponse response = readMessage(result);
-        if (response == null) {
-            // No message retrieved.
-        } else {
-            System.arraycopy(response.getBody(),0,msg,0, response.getBody().length);
-        }
-        return result;
-    }
-
     public void sendMessage(byte[] msg) throws Exception {
         sendMessageToQueue(_queue, msg);
     }
 
     public void sendMessageToQueue(String queue, byte[] msg) throws Exception {
+        //log(msg);
         _channel.basicPublish("", queue, null, msg);
+    }
+
+    public byte[] readMessageStream(String[] result) throws Exception {
+        GetResponse response = readMessage(result);
+        if (response == null) {
+            return new byte[0];
+        }
+        return response.getBody();
     }
 
     public String[] readMessageString() throws Exception {
@@ -70,6 +67,7 @@ public class API {
         GetResponse response = _channel.basicGet(_queue, autoAck);
         if (response == null) {
             // No message retrieved.
+            response = new GetResponse(null, null, new byte[0], 0);
         } else {
             AMQP.BasicProperties props = response.getProps();
             msg[0] =  Integer.toString(response.getBody().length);
@@ -87,9 +85,16 @@ public class API {
             msg[12] = props.getDeliveryMode() != null ? Integer.toString(props.getDeliveryMode()) : null;
             msg[13] = props.getPriority() != null ? Integer.toString(props.getPriority()) : null;
             msg[14] = props.getTimestamp() != null ? props.getTimestamp().toString() : null;
+
+            //log(response.getBody());
         }
         return response;
 
+    }
+
+    private void log(byte[] msg) throws IOException {
+        Path path = Paths.get("C:\\InterSystems\\java.log");
+        Files.write(path, msg);
     }
 
     public void close()throws Exception {
