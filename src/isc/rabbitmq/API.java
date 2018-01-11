@@ -5,6 +5,10 @@ import com.rabbitmq.client.*;
 import java.io.IOException;
 
 import java.nio.file.*;
+
+import java.util.Date;
+import java.util.HashMap;
+
 /**
  * Created by eduard on 06.10.2017.
  */
@@ -30,6 +34,10 @@ public class API {
         _queue = queue;
     }
 
+    public void sendMessage(byte[] msg, String correlationId, String messageId) throws Exception {
+        sendMessageToQueue(_queue, msg, correlationId, messageId);
+    }
+
     public void sendMessage(byte[] msg) throws Exception {
         sendMessageToQueue(_queue, msg);
     }
@@ -37,6 +45,11 @@ public class API {
     public void sendMessageToQueue(String queue, byte[] msg) throws Exception {
         //log(msg);
         _channel.basicPublish("", queue, null, msg);
+    }
+
+    public void sendMessageToQueue(String queue, byte[] msg, String correlationId, String messageId) throws Exception {
+        AMQP.BasicProperties props = createProperties(correlationId, messageId);
+        _channel.basicPublish("", queue, props, msg);
     }
 
     public byte[] readMessageStream(String[] result) throws Exception {
@@ -100,6 +113,26 @@ public class API {
     public void close()throws Exception {
         _channel.close();
         _connection.close();
+    }
+
+    private AMQP.BasicProperties createProperties(String correlationId, String messageId) throws Exception
+    {
+        String contentType = null;
+        String contentEncoding = null;
+        HashMap<String, Object> headers = null;
+        Integer deliveryMode = null;
+        Integer priority = null;
+        //String correlationId= null;
+        String replyTo = null;
+        String expiration= null;
+        //String messageId= null;
+        Date timestamp= null;
+        String type = null;
+        String userId= null;
+        String appId = null;
+        String clusterId= null;
+        AMQP.BasicProperties props = new AMQP.BasicProperties(contentType, contentEncoding, headers, deliveryMode, priority, correlationId, replyTo, expiration, messageId, timestamp, type, userId, appId, clusterId);
+        return props;
     }
 
 }
