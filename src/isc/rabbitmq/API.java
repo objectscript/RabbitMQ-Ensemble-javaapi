@@ -13,24 +13,46 @@ import java.util.HashMap;
  * Created by eduard on 06.10.2017.
  */
 public class API {
-    private final Channel _channel;
+    private Channel _channel;
 
     private final String _queue;
 
     private final Connection _connection;
 
-    public API(String host, int port, String user, String pass, String virtualHost, String queue)  throws Exception {
+    public API(String host, int port, String user, String pass, String virtualHost, String queue, int durable)  throws Exception {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(host);
         factory.setPort(port);
         factory.setUsername(user);
         factory.setPassword(pass);
         factory.setVirtualHost(virtualHost);
-
+        //factory.setAutomaticRecoveryEnabled(true);
 
         _connection = factory.newConnection();
         _channel = _connection.createChannel();
-        _channel.queueDeclare(queue, false, false, false, null);
+        try {
+            // Check that queue exists
+            // Method throws exception if queue does not exist or is exclusive
+            // Correct exception text: channel error; protocol method: #method<channel.close>(reply-code=404, reply-text=NOT_FOUND - no queue 'queue'
+            com.rabbitmq.client.AMQP.Queue.DeclareOk declareOk = _channel.queueDeclarePassive(queue);
+        } catch (java.io.IOException ex) {
+            // Exception closes the channel.
+            // So we need to create new one.
+            // _channel.basicRecover() doesn't do the trick
+            _channel = _connection.createChannel();
+
+            Boolean durableBool = (durable != 0);
+            Boolean exclusive = false;
+            Boolean autoDelete = false;
+            // queue - the name of the queue
+            // durable - true if we are declaring a durable queue (the queue will survive a server restart)
+            // exclusive - true if we are declaring an exclusive queue (restricted to this connection)
+            // autoDelete - true if we are declaring an autodelete queue (server will delete it when no longer in use)
+            // arguments - other properties (construction arguments) for the queue
+            _channel.queueDeclare(queue, durableBool, exclusive, autoDelete, null);
+
+        }
+
         _queue = queue;
     }
 
