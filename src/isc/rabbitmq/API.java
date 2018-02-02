@@ -4,8 +4,7 @@ import com.rabbitmq.client.*;
 
 import java.io.IOException;
 
-import java.nio.file.*;
-
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -65,7 +64,6 @@ public class API {
     }
 
     public void sendMessageToQueue(String queue, byte[] msg) throws Exception {
-        //log(msg);
         _channel.basicPublish("", queue, null, msg);
     }
 
@@ -89,7 +87,19 @@ public class API {
         if (response == null) {
             // No message retrieved.
         } else {
-            result[15] = new String(response.getBody());
+            result[15] = new String(response.getBody(), StandardCharsets.UTF_8);
+        }
+        return result;
+    }
+
+    public String readMessageBodyString() throws Exception {
+        String result;
+        boolean autoAck = true;
+        GetResponse response = _channel.basicGet(_queue, autoAck);
+        if (response == null) {
+            result = "";
+        } else {
+            result = new String(response.getBody(), StandardCharsets.UTF_8);
         }
         return result;
     }
@@ -120,16 +130,9 @@ public class API {
             msg[12] = props.getDeliveryMode() != null ? Integer.toString(props.getDeliveryMode()) : null;
             msg[13] = props.getPriority() != null ? Integer.toString(props.getPriority()) : null;
             msg[14] = props.getTimestamp() != null ? props.getTimestamp().toString() : null;
-
-            //log(response.getBody());
         }
         return response;
 
-    }
-
-    private void log(byte[] msg) throws IOException {
-        Path path = Paths.get("C:\\InterSystems\\java.log");
-        Files.write(path, msg);
     }
 
     public void close()throws Exception {
