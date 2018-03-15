@@ -16,9 +16,15 @@ public class API {
 
     private final String _queue;
 
+    private final String _exchange;
+
     private final Connection _connection;
 
     public API(String host, int port, String user, String pass, String virtualHost, String queue, int durable)  throws Exception {
+        this(host, port, user, pass, virtualHost, queue, durable, "");
+    }
+
+    public API(String host, int port, String user, String pass, String virtualHost, String queue, int durable, String exchange)  throws Exception {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(host);
         factory.setPort(port);
@@ -53,6 +59,7 @@ public class API {
         }
 
         _queue = queue;
+        _exchange = exchange;
     }
 
     public void sendMessage(byte[] msg, String correlationId, String messageId) throws Exception {
@@ -64,12 +71,12 @@ public class API {
     }
 
     public void sendMessageToQueue(String queue, byte[] msg) throws Exception {
-        _channel.basicPublish("", queue, null, msg);
+        _channel.basicPublish(_exchange, queue, null, msg);
     }
 
     public void sendMessageToQueue(String queue, byte[] msg, String correlationId, String messageId) throws Exception {
         AMQP.BasicProperties props = createProperties(correlationId, messageId);
-        _channel.basicPublish("", queue, props, msg);
+        _channel.basicPublish(_exchange, queue, props, msg);
     }
 
     public byte[] readMessageStream(String[] result) throws Exception {
