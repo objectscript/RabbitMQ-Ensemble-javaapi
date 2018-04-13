@@ -59,7 +59,7 @@ public class API {
         }
 
         _queue = queue;
-        _exchange = exchange;
+        _exchange = exchange != null ? exchange : "";
     }
 
     public void sendMessage(byte[] msg, String correlationId, String messageId) throws Exception {
