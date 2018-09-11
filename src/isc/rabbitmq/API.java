@@ -36,10 +36,14 @@ public class API {
         _connection = factory.newConnection();
         _channel = _connection.createChannel();
         try {
-            // Check that queue exists
-            // Method throws exception if queue does not exist or is exclusive
-            // Correct exception text: channel error; protocol method: #method<channel.close>(reply-code=404, reply-text=NOT_FOUND - no queue 'queue'
-            com.rabbitmq.client.AMQP.Queue.DeclareOk declareOk = _channel.queueDeclarePassive(queue);
+            // Do we need to declare queue?
+            // No if we're sending by exchange/routing_key
+            if (exchange != null && !exchange.isEmpty()) {
+                // Check that queue exists
+                // Method throws exception if queue does not exist or is exclusive
+                // Correct exception text: channel error; protocol method: #method<channel.close>(reply-code=404, reply-text=NOT_FOUND - no queue 'queue'
+                com.rabbitmq.client.AMQP.Queue.DeclareOk declareOk = _channel.queueDeclarePassive(queue);
+            }
         } catch (java.io.IOException ex) {
             // Exception closes the channel.
             // So we need to create new one.
