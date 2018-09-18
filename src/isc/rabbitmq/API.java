@@ -20,6 +20,8 @@ public class API {
 
     private final Connection _connection;
 
+    public String ContentType;
+
     public API(String host, int port, String user, String pass, String virtualHost, String queue, int durable)  throws Exception {
         this(host, port, user, pass, virtualHost, queue, durable, "");
     }
@@ -153,7 +155,7 @@ public class API {
 
     private AMQP.BasicProperties createProperties(String correlationId, String messageId) throws Exception
     {
-        String contentType = null;
+        String contentType = ContentType;
         String contentEncoding = null;
         HashMap<String, Object> headers = null;
         Integer deliveryMode = null;
