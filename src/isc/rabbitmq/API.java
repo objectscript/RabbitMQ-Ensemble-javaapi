@@ -77,7 +77,7 @@ public class API {
     }
 
     public void sendMessageToQueue(String queue, byte[] msg) throws Exception {
-        _channel.basicPublish(_exchange, queue, null, msg);
+        sendMessageToQueue(queue, msg, null, null);
     }
 
     public void sendMessageToQueue(String queue, byte[] msg, String correlationId, String messageId) throws Exception {
