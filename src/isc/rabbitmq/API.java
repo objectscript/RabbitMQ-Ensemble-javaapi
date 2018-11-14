@@ -148,6 +148,11 @@ public class API {
 
     }
 
+    public Boolean isOpen()
+    {
+        return _connection !=null ? _connection.isOpen() : false;
+    }
+
     public void close()throws Exception {
         _channel.close();
         _connection.close();
