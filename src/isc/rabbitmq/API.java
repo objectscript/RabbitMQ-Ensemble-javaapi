@@ -12,7 +12,7 @@ import java.util.HashMap;
  * Created by eduard on 06.10.2017.
  */
 public class API {
-    private Channel _channel;
+    private com.rabbitmq.client.Channel _channel;
 
     private final String _queue;
 
@@ -28,12 +28,18 @@ public class API {
 
     public API(String host, int port, String user, String pass, String virtualHost, String queue, int durable, String exchange)  throws Exception {
         ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost(host);
-        factory.setPort(port);
-        factory.setUsername(user);
-        factory.setPassword(pass);
-        factory.setVirtualHost(virtualHost);
-        //factory.setAutomaticRecoveryEnabled(true);
+
+        if (host.toLowerCase().startsWith("amqp://")) {
+            // we got URI connection string
+            factory.setUri(host);
+        } else{
+            factory.setHost(host);
+            factory.setPort(port);
+            factory.setUsername(user);
+            factory.setPassword(pass);
+            factory.setVirtualHost(virtualHost);
+            //factory.setAutomaticRecoveryEnabled(true);
+        }
 
         _connection = factory.newConnection();
         _channel = _connection.createChannel();
@@ -68,8 +74,8 @@ public class API {
         _exchange = exchange != null ? exchange : "";
     }
 
-    public void sendMessage(byte[] msg, String correlationId, String messageId) throws Exception {
-        sendMessageToQueue(_queue, msg, correlationId, messageId);
+    public void sendMessageId(byte[] msg, String correlationId, String messageId) throws Exception {
+        sendMessageToQueueId(_queue, msg, correlationId, messageId);
     }
 
     public void sendMessage(byte[] msg) throws Exception {
@@ -77,10 +83,10 @@ public class API {
     }
 
     public void sendMessageToQueue(String queue, byte[] msg) throws Exception {
-        sendMessageToQueue(queue, msg, null, null);
+        sendMessageToQueueId(queue, msg, null, null);
     }
 
-    public void sendMessageToQueue(String queue, byte[] msg, String correlationId, String messageId) throws Exception {
+    public void sendMessageToQueueId(String queue, byte[] msg, String correlationId, String messageId) throws Exception {
         AMQP.BasicProperties props = createProperties(correlationId, messageId);
         _channel.basicPublish(_exchange, queue, props, msg);
     }
@@ -163,7 +169,7 @@ public class API {
         String contentType = ContentType;
         String contentEncoding = null;
         HashMap<String, Object> headers = null;
-        Integer deliveryMode = null;
+        Integer deliveryMode = Integer.valueOf(2);
         Integer priority = null;
         //String correlationId= null;
         String replyTo = null;
@@ -174,6 +180,7 @@ public class API {
         String userId= null;
         String appId = null;
         String clusterId= null;
+
         AMQP.BasicProperties props = new AMQP.BasicProperties(contentType, contentEncoding, headers, deliveryMode, priority, correlationId, replyTo, expiration, messageId, timestamp, type, userId, appId, clusterId);
         return props;
     }
